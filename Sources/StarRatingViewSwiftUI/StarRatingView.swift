@@ -23,6 +23,7 @@ public struct StarRatingView: View
   private let color: Color // The color of the stars
   private let maxRating: Float // Defines upper limit of the rating
   private var needsComputing: Bool = false
+  private var onRatingChanged: (() -> Void)?
 
   public init(rating: Float, color: Color = .orange, maxRating: Float = 5) {
     self.theRating = rating
@@ -33,12 +34,13 @@ public struct StarRatingView: View
 
   @Binding private var rating: Float
 
-  public init(rating: Binding<Float>, color: Color = .orange, maxRating: Float = 5) {
+  public init(rating: Binding<Float>, color: Color = .orange, maxRating: Float = 5, onRatingChanged: (() -> Void)? = nil) {
     self.theRating = rating.wrappedValue
     self.color = color
     self.maxRating = maxRating
     self._rating = rating
     self.needsComputing = true
+    self.onRatingChanged = onRatingChanged
   }
 
   public var body: some View {
@@ -129,19 +131,22 @@ extension StarRatingView
     }
   }
 
-  private func swipe(on length: CGFloat) -> some Gesture {
-    /*
-     * XXX:
-     * minimumDistance が 0.0 なのは TapGesture のタップにも反応させるため
-     */
-    DragGesture(minimumDistance: 0.0, coordinateSpace: .local)
-      .onChanged { value in
-        self.computeRating(with: value, on: length)
+    private func swipe(on length: CGFloat) -> some Gesture {
+        /*
+         * XXX:
+         * minimumDistance が 0.0 なのは TapGesture のタップにも反応させるため
+         */
+        DragGesture(minimumDistance: 0.0, coordinateSpace: .local)
+          .onChanged { value in
+            self.computeRating(with: value, on: length)
+            onRatingChanged?() // Call the function when swiping starts
+          }
+          .onEnded { value in
+            self.computeRating(with: value, on: length)
+            onRatingChanged?() // Call the function when swiping ends
+          }
       }
-      .onEnded { value in
-        self.computeRating(with: value, on: length)
-      }
-  }
+
 
   private func computeRating(with value: DragGesture.Value, on length: CGFloat) {
     guard self.needsComputing else { return }
