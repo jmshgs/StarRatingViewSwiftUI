@@ -139,7 +139,6 @@ extension StarRatingView
         DragGesture(minimumDistance: 0.0, coordinateSpace: .local)
           .onChanged { value in
             self.computeRating(with: value, on: length)
-            onRatingChanged?() // Call the function when swiping starts
           }
           .onEnded { value in
             self.computeRating(with: value, on: length)
